@@ -19,6 +19,8 @@ type Config struct {
 	DbPort         string `envconfig:"DB_PORT"`
 	DbMaxIdleConns int    `envconfig:"db_max_idle_conns" default:"50"`
 	DbMaxOpenConns int    `envconfig:"db_max_open_conns" default:"100"`
+
+	APIToken string `envconfig:"API_TOKEN"`
 }
 
 var once sync.Once
