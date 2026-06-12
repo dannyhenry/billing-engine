@@ -10,13 +10,25 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// IsDelinquent godoc
+// @Summary Check loan delinquency
+// @Description Returns whether borrower is delinquent. Borrower is delinquent when due unpaid schedules are greater than or equal to 2.
+// @Tags Loans
+// @Produce json
+// @Security BearerAuth
+// @Param loan_id path int true "Loan ID"
+// @Param mock_date query string false "Mock date for testing, format YYYY-MM-DD" example(2026-01-25)
+// @Success 200 {object} api_response.SuccessResponse{data=bool}
+// @Failure 500 {object} api_response.ErrorResponse{errors=[]string}
+// @Failure 400 {object} api_response.ErrorResponse{errors=[]string}
+// @Router /loans/{loan_id}/delinquent [get]
 func (h *LoanHandler) IsDelinquent(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 6*time.Second)
 	defer cancel()
 
 	loanID, err := strconv.ParseInt(c.Param("loan_id"), 10, 64)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, api_response.ApplicationError("invalid loan id",
+		return c.JSON(http.StatusBadRequest, api_response.BuildErrorResponse("invalid loan id",
 			http.StatusBadRequest, err, nil))
 	}
 	mockDateStr := c.QueryParam("mock_date")
@@ -32,7 +44,7 @@ func (h *LoanHandler) IsDelinquent(c echo.Context) error {
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest,
-				api_response.ApplicationError("invalid as_of_date format, use YYYY-MM-DD", http.StatusBadRequest,
+				api_response.BuildErrorResponse("invalid as_of_date format, use YYYY-MM-DD", http.StatusBadRequest,
 					err, nil))
 		}
 	}
@@ -40,7 +52,7 @@ func (h *LoanHandler) IsDelinquent(c echo.Context) error {
 	data, err := h.LoanScheduleService.IsDelinquent(ctx, loanID, mockDate)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest,
-			api_response.ApplicationError("Data Not Found", http.StatusBadRequest,
+			api_response.BuildErrorResponse("Data Not Found", http.StatusBadRequest,
 				err, nil))
 	}
 

@@ -1,0 +1,216 @@
+basePath: /
+definitions:
+  api_response.ErrorResponse:
+    properties:
+      data: {}
+      errors: {}
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  api_response.SuccessResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  loan.PaymentLoanRequest:
+    properties:
+      amount:
+        type: integer
+      loan_id:
+        type: integer
+    type: object
+  loan.PaymentLoanResponse:
+    properties:
+      amount:
+        type: integer
+      loan_id:
+        type: integer
+      loan_status:
+        type: string
+      paid_weeks:
+        items:
+          type: integer
+        type: array
+      payment_date:
+        type: string
+      payment_id:
+        type: integer
+      remaining_outstanding:
+        type: integer
+    type: object
+host: localhost:9100
+info:
+  contact: {}
+  description: Loan Billing Engine API for payment, outstanding, and delinquency.
+  title: Billing Engine API
+  version: "1.0"
+paths:
+  /loans/{loan_id}/delinquent:
+    get:
+      description: Returns whether borrower is delinquent. Borrower is delinquent
+        when due unpaid schedules are greater than or equal to 2.
+      parameters:
+      - description: Loan ID
+        in: path
+        name: loan_id
+        required: true
+        type: integer
+      - description: Mock date for testing, format YYYY-MM-DD
+        example: "2026-01-25"
+        in: query
+        name: mock_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api_response.SuccessResponse'
+            - properties:
+                data:
+                  type: boolean
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/api_response.ErrorResponse'
+            - properties:
+                errors:
+                  items:
+                    type: string
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            allOf:
+            - $ref: '#/definitions/api_response.ErrorResponse'
+            - properties:
+                errors:
+                  items:
+                    type: string
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Check loan delinquency
+      tags:
+      - Loans
+  /loans/{loan_id}/outstanding:
+    get:
+      description: Returns remaining outstanding amount for a loan.
+      parameters:
+      - description: Loan ID
+        in: path
+        name: loan_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api_response.SuccessResponse'
+            - properties:
+                data:
+                  format: int64
+                  type: integer
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/api_response.ErrorResponse'
+            - properties:
+                errors:
+                  items:
+                    type: string
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            allOf:
+            - $ref: '#/definitions/api_response.ErrorResponse'
+            - properties:
+                errors:
+                  items:
+                    type: string
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get loan outstanding amount
+      tags:
+      - Loans
+  /loans/payments:
+    post:
+      consumes:
+      - application/json
+      description: Pay one or multiple installments. Payment amount must be a multiple
+        of weekly installment amount.
+      parameters:
+      - description: Payment request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/loan.PaymentLoanRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/api_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/loan.PaymentLoanResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/api_response.ErrorResponse'
+            - properties:
+                errors:
+                  items:
+                    type: string
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            allOf:
+            - $ref: '#/definitions/api_response.ErrorResponse'
+            - properties:
+                errors:
+                  items:
+                    type: string
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Make loan payment
+      tags:
+      - Loans
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer {token}" to authorize.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
